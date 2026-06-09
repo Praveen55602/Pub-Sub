@@ -46,7 +46,11 @@ func (b *broker) publish(topic string, data int) error {
 	//in production also we'll have some sort of queue to absorb the events and once the receiver is ready it will consume those events one by one in LIFO style, in production since we have the broker as seperate service therefore all the events sharing is not done via queue but using long live tcp streams between receiver and the broker.
 	//2. it will also make this publish a non-blocking operation.
 	for _, ch := range subscribers {
-		ch <- data
+		select {
+		case ch <- data:
+		default:
+			fmt.Println("dropping data as not able to put data into the queue")
+		}
 	}
 
 	return nil
